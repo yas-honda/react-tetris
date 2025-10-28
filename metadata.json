@@ -1,0 +1,5 @@
+{
+  "name": "React Tetris",
+  "description": "A classic block-stacking puzzle game built with React and TypeScript. Use your keyboard to move and rotate the falling tetrominoes to clear lines and score points.",
+  "requestFramePermissions": []
+}
