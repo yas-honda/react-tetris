@@ -1,4 +1,3 @@
-
 import type { TETROMINOES } from './lib/tetris';
 
 export type TetrominoShape = keyof typeof TETROMINOES;
@@ -10,4 +9,11 @@ export interface PlayerPiece {
   shape: number[][];
   color: string;
   collided: boolean;
+}
+
+export interface Score {
+  id: number;
+  created_at: string;
+  player_name: string;
+  score: number;
 }

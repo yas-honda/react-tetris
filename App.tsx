@@ -1,9 +1,9 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { GameBoard } from './components/GameBoard';
 import { Scoreboard } from './components/Scoreboard';
 import { NextPiecePreview } from './components/NextPiecePreview';
 import { GameOverModal } from './components/GameOverModal';
+import { Leaderboard } from './components/Leaderboard';
 import { useGameLoop } from './hooks/useGameLoop';
 import { 
   BOARD_WIDTH, 
@@ -11,7 +11,6 @@ import {
   createEmptyBoard, 
   getRandomTetromino,
   checkCollision,
-  // FIX: Import TETROMINOES to look up shape key by color.
   TETROMINOES
 } from './lib/tetris';
 import type { GameBoard as GameBoardType, PlayerPiece, TetrominoShape } from './types';
@@ -26,6 +25,7 @@ const App: React.FC = () => {
   const [isPaused, setIsPaused] = useState(true);
   const [isGameOver, setIsGameOver] = useState(false);
   const [dropTime, setDropTime] = useState<number | null>(null);
+  const [leaderboardKey, setLeaderboardKey] = useState(0);
 
   const resetPlayer = useCallback(() => {
     const newShape = nextPieceShape || getRandomTetromino();
@@ -55,9 +55,10 @@ const App: React.FC = () => {
     setLevel(0);
     setDropTime(1000);
     setNextPieceShape(getRandomTetromino());
-    setPlayer(null); // Will be set by resetPlayer
+    setPlayer(null);
     setIsGameOver(false);
     setIsPaused(false);
+    setLeaderboardKey(prev => prev + 1); // Refresh leaderboard
   }, []);
 
   useEffect(() => {
@@ -65,6 +66,10 @@ const App: React.FC = () => {
       resetPlayer();
     }
   }, [player, isGameOver, isPaused, resetPlayer]);
+  
+  const handleScoreSubmitted = () => {
+    setLeaderboardKey(prev => prev + 1);
+  };
 
   const updatePlayerPos = ({ x, y, collided }: { x: number; y: number; collided?: boolean }) => {
     if (!player) return;
@@ -133,8 +138,6 @@ const App: React.FC = () => {
       setBoard(prevBoard => {
         const newBoard = prevBoard.map(row => row.slice());
         
-        // FIX: Correctly identify the current piece's shape to store on the board.
-        // The previous logic incorrectly used the next piece's shape.
         const shapeKey = (Object.keys(TETROMINOES) as Array<keyof typeof TETROMINOES>).find(
           (key) => TETROMINOES[key].color === player.color
         );
@@ -149,7 +152,6 @@ const App: React.FC = () => {
           });
         }
 
-        // Check for cleared lines
         let linesCleared = 0;
         const sweptBoard = newBoard.reduce((acc, row) => {
           if (row.every(cell => cell !== 0)) {
@@ -171,7 +173,6 @@ const App: React.FC = () => {
       });
       resetPlayer();
     }
-  // FIX: Removed unused `nextPieceShape` dependency.
   }, [player, resetPlayer, level]);
   
   useEffect(() => {
@@ -217,9 +218,10 @@ const App: React.FC = () => {
                   </div>
                 )}
             </div>
-            <aside className="flex flex-col gap-4 w-full md:w-52">
+            <aside className="flex flex-col gap-4 w-full md:w-64">
                 <Scoreboard score={score} lines={lines} level={level} />
                 {nextPieceShape && <NextPiecePreview shapeKey={nextPieceShape} />}
+                <Leaderboard refreshKey={leaderboardKey} />
                 <div className="p-4 bg-slate-800 rounded-lg border-2 border-slate-700">
                     <h3 className="text-lg font-bold mb-2 text-cyan-400">Controls</h3>
                     <ul className="text-sm space-y-1 text-slate-300">
@@ -232,7 +234,7 @@ const App: React.FC = () => {
                 </div>
             </aside>
         </div>
-        {isGameOver && <GameOverModal score={score} onRestart={startGame} />}
+        {isGameOver && <GameOverModal score={score} onRestart={startGame} onScoreSubmitted={handleScoreSubmitted} />}
         {isPaused && !player && !isGameOver && (
           <div className="absolute inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center">
               <h2 className="text-5xl font-extrabold text-white mb-8">REACT TETRIS</h2>
